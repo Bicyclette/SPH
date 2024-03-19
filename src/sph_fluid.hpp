@@ -133,6 +133,10 @@ public:
     GLuint _numNeighbors_SSBO;
 };
 
+// ===========================================================================
+// ============================== FLUID DISPLAY ==============================
+// ===========================================================================
+
 class Fluid
 {
 public:
@@ -149,13 +153,10 @@ public:
     AABB m_domain_aabb;
 	GLuint m_domain_vao;
 	GLuint m_domain_vbo;
-	std::shared_ptr<Mesh> m_particle_mesh;
+    GLuint m_particle_vao;
+    GLuint m_particle_vbo;
     SphSolver m_solver;
     bool m_is_running;
-
-public:
-    GLuint m_instanced_vbo;
-
 };
 
 class Ray

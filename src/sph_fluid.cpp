@@ -740,12 +740,19 @@ m_solver(0.001f, iParticleRadius * 2.0f, 1000.0f, glm::vec3(0.0f, -9.8f, 0.0f), 
 	glBufferData(GL_ARRAY_BUFFER, 72 * sizeof(float), domain, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
 	glBindVertexArray(0);
 
-	// load particle mesh
-	m_particle_mesh = std::make_shared<Mesh>("../assets/sphere.obj");
-	m_particle_mesh->m_material.m_albedo = glm::vec3(0.05f, 0.05f, 0.85f);
+	// PARTICLES' VAO
+	glGenVertexArrays(1, &m_particle_vao);
+	glBindVertexArray(m_particle_vao);
+
+	// PARTICLES' VBO
+	glGenBuffers(1, &m_particle_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, m_particle_vbo);
+	glBufferData(GL_ARRAY_BUFFER, c_max_particle_count * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glBindVertexArray(0);
 
 	// create particles
 	update_particles_radius(iParticleRadius);
@@ -759,29 +766,42 @@ void Fluid::draw(std::shared_ptr<Shader> iShader, bool iWireframe)
 	glLineWidth(2.0f);
 	glBindVertexArray(m_domain_vao);
 	iShader->use();
-	iShader->set("instanced_rendering", false);
-	iShader->set("draw_domain", true);
+	if(m_solver.m_neighbors_method == SONIC_BOOM)
+	{
+		iShader->set("draw_domain", true);
+	}
 	glDrawArrays(GL_LINES, 0, 72);
 	glLineWidth(1.0f);
 
 	// draw fluid
-	iShader->set("draw_domain", false);
 	if (iWireframe)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 	if (m_solver.m_neighbors_method != SONIC_BOOM)
 	{
-		m_particle_mesh->set_instance_rendering(m_solver._pos, m_solver._h);
-		m_particle_mesh->draw(iShader);
+		glBindVertexArray(m_particle_vao);
+		glBindBuffer(GL_ARRAY_BUFFER, m_particle_vbo);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, m_solver.particleCount() * sizeof(glm::vec3), m_solver._pos.data());
+
+		iShader->use();
+		iShader->set("draw_domain", false);
+		glPointSize(m_particle_radius * 10.0f);
+		glDrawArrays(GL_POINTS, 0, m_solver.particleCount());
+		glBindVertexArray(0);
+		glPointSize(1.0f);
 	}
 	else
 	{
-		iShader->set("particleScale", m_solver._h);
-		m_particle_mesh->m_instance_rendering = true;
-		m_particle_mesh->m_instance_count = m_solver.particleCount();
-		m_fluid_mesh->link_to_pos_SSBO(m_solver._pos_SSBO);
-		m_particle_mesh->draw(iShader, true);
+		glBindVertexArray(m_particle_vao);
+		glBindBuffer(GL_ARRAY_BUFFER, m_solver._pos_SSBO);
+
+		iShader->use();
+		iShader->set("draw_domain", false);
+		glPointSize(m_particle_radius * 10.0f);
+		glDrawArraysInstanced(GL_POINTS, 0, m_solver.particleCount(), m_solver.particleCount());
+		glBindVertexArray(0);
+		glPointSize(1.0f);
 	}
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
@@ -890,8 +910,8 @@ void Fluid::update()
 {
 	if (m_is_running)
 	{
-		// solve 10 steps
-		for (int i = 0; i < 10; ++i)
+		// solve 64 steps = 16 ms
+		for (int i = 0; i < 64; ++i)
 		{
 			m_solver.update();
 		}

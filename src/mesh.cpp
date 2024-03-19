@@ -126,16 +126,6 @@ void Mesh::draw(std::shared_ptr<Shader> iShader, bool use_sonic_boom)
 {
 	iShader->use();
 
-	iShader->set("material.albedo", m_material.m_albedo);
-	iShader->set("material.roughness", m_material.m_roughness);
-	iShader->set("material.metallic", m_material.m_metallic);
-	
-	if (!use_sonic_boom)
-	{
-		iShader->set("model", m_model);
-		iShader->set("instanced_rendering", m_instance_rendering);
-	}
-
 	glBindVertexArray(m_gpu_geometry.m_vao);
 	if (!m_instance_rendering)
 	{

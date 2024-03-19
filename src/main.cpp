@@ -13,7 +13,7 @@ void initScene();
 void renderScene();
 void draw_UI();
 void ImGui_init(GLFWwindow* win);
-void set_pbr_shader();
+void set_particle_shader();
 void set_sonic_boom_shader();
 
 // ==================== GLOBAL OBJECTS ====================
@@ -29,12 +29,8 @@ std::shared_ptr<Fluid> g_fluid;
 // grid axis
 std::shared_ptr<GridAxis> g_grid_axis;
 
-// lighting
-std::vector<DirectionalLight> g_directional_light;
-std::vector<PointLight> g_point_light;
-
 // shaders
-std::shared_ptr<Shader> g_shader_pbr;
+std::shared_ptr<Shader> g_shader_particle;
 std::shared_ptr<Shader> g_shader_sonic_boom;
 
 // user interface
@@ -67,7 +63,7 @@ void processInput(GLFWwindow* window)
 
 	if (glfwGetKey(window, GLFW_KEY_F12) == GLFW_PRESS) // recompile diffuse shader
 	{
-		g_shader_pbr = std::make_shared<Shader>("../shaders/pbr/vertex.glsl", "../shaders/pbr/fragment.glsl");
+		g_shader_particle = std::make_shared<Shader>("../shaders/particle/vertex.glsl", "../shaders/particle/fragment.glsl");
 	}
 
 	// CAMERA RELATED
@@ -98,9 +94,7 @@ void initScene()
 	g_mesh_water_tank = std::make_shared<Mesh>("../assets/water_tank.obj");
 	g_fluid = std::make_shared<Fluid>(mesh_water_volume, g_ui.m_particle_radius, g_mesh_water_tank);
 
-	g_directional_light.emplace_back(glm::vec3(0.0f, -1.0f, -0.15f), glm::vec3(1.0f), 10.0f);
-
-	g_shader_pbr = std::make_shared<Shader>("../shaders/pbr/vertex.glsl", "../shaders/pbr/fragment.glsl");
+	g_shader_particle = std::make_shared<Shader>("../shaders/particle/vertex.glsl", "../shaders/particle/fragment.glsl");
 	g_shader_sonic_boom = std::make_shared<Shader>("../shaders/sonic_boom/vertex.glsl", "../shaders/sonic_boom/fragment.glsl");
 	
 	g_fluid->m_solver.set_neighbors_compute_method(SONIC_BOOM);
@@ -111,25 +105,15 @@ void renderScene()
 	// draw grid
 	g_grid_axis->draw(g_cam->getViewMatrix(), g_cam->getProjectionMatrix());
 
-	std::shared_ptr<Shader> activeShader;
 	if (g_fluid->m_solver.m_neighbors_method == SONIC_BOOM)
 	{
 		set_sonic_boom_shader();
-		activeShader = g_shader_sonic_boom;
+		g_fluid->draw(g_shader_sonic_boom, g_ui.m_draw_mode == 0);
 	}
 	else
 	{
-		set_pbr_shader();
-		activeShader = g_shader_pbr;
-	}
-
-	if (g_ui.m_draw_mode == 0) // WIREFRAME
-	{
-		g_fluid->draw(activeShader, true);
-	}
-	else if (g_ui.m_draw_mode == 1) // SHADED
-	{
-		g_fluid->draw(activeShader, false);
+		set_particle_shader();
+		g_fluid->draw(g_shader_particle, g_ui.m_draw_mode == 0);
 	}
 
 	// reset
@@ -193,37 +177,14 @@ void ImGui_init(GLFWwindow* win)
 	(void)io;
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(win, true);
-	ImGui_ImplOpenGL3_Init("#version 410");
+	ImGui_ImplOpenGL3_Init("#version 460");
 }
 
-void set_pbr_shader()
+void set_particle_shader()
 {
-	g_shader_pbr->use();
-	g_shader_pbr->set("model", glm::mat4(1.0f));
-	g_shader_pbr->set("view", g_cam->getViewMatrix());
-	g_shader_pbr->set("proj", g_cam->getProjectionMatrix());
-	g_shader_pbr->set("camPos", g_cam->getPosition());
-
-	// set lighting uniforms
-	g_shader_pbr->set("numDirectionalLight", static_cast<int>(g_directional_light.size()));
-	for (size_t i = 0; i < g_directional_light.size(); ++i)
-	{
-		std::string istr = std::to_string(i);
-		g_shader_pbr->set("directionalLight[" + istr + "].direction", g_directional_light[i].m_direction);
-		g_shader_pbr->set("directionalLight[" + istr + "].color", g_directional_light[i].m_color);
-		g_shader_pbr->set("directionalLight[" + istr + "].intensity", g_directional_light[i].m_intensity);
-	}
-	g_shader_pbr->set("numPointLight", static_cast<int>(g_point_light.size()));
-	for (size_t i = 0; i < g_point_light.size(); ++i)
-	{
-		std::string istr = std::to_string(i);
-		g_shader_pbr->set("pointLight[" + istr + "].position", g_point_light[i].m_position);
-		g_shader_pbr->set("pointLight[" + istr + "].color", g_point_light[i].m_color);
-		g_shader_pbr->set("pointLight[" + istr + "].intensity", g_point_light[i].m_intensity);
-		g_shader_pbr->set("pointLight[" + istr + "].ac", g_point_light[i].m_ac);
-		g_shader_pbr->set("pointLight[" + istr + "].al", g_point_light[i].m_al);
-		g_shader_pbr->set("pointLight[" + istr + "].aq", g_point_light[i].m_aq);
-	}
+	g_shader_particle->use();
+	g_shader_particle->set("view", g_cam->getViewMatrix());
+	g_shader_particle->set("proj", g_cam->getProjectionMatrix());
 }
 
 void set_sonic_boom_shader()
@@ -231,28 +192,6 @@ void set_sonic_boom_shader()
 	g_shader_sonic_boom->use();
 	g_shader_sonic_boom->set("view", g_cam->getViewMatrix());
 	g_shader_sonic_boom->set("proj", g_cam->getProjectionMatrix());
-	g_shader_sonic_boom->set("camPos", g_cam->getPosition());
-
-	// set lighting uniforms
-	g_shader_sonic_boom->set("numDirectionalLight", static_cast<int>(g_directional_light.size()));
-	for (size_t i = 0; i < g_directional_light.size(); ++i)
-	{
-		std::string istr = std::to_string(i);
-		g_shader_sonic_boom->set("directionalLight[" + istr + "].direction", g_directional_light[i].m_direction);
-		g_shader_sonic_boom->set("directionalLight[" + istr + "].color", g_directional_light[i].m_color);
-		g_shader_sonic_boom->set("directionalLight[" + istr + "].intensity", g_directional_light[i].m_intensity);
-	}
-	g_shader_sonic_boom->set("numPointLight", static_cast<int>(g_point_light.size()));
-	for (size_t i = 0; i < g_point_light.size(); ++i)
-	{
-		std::string istr = std::to_string(i);
-		g_shader_sonic_boom->set("pointLight[" + istr + "].position", g_point_light[i].m_position);
-		g_shader_sonic_boom->set("pointLight[" + istr + "].color", g_point_light[i].m_color);
-		g_shader_sonic_boom->set("pointLight[" + istr + "].intensity", g_point_light[i].m_intensity);
-		g_shader_sonic_boom->set("pointLight[" + istr + "].ac", g_point_light[i].m_ac);
-		g_shader_sonic_boom->set("pointLight[" + istr + "].al", g_point_light[i].m_al);
-		g_shader_sonic_boom->set("pointLight[" + istr + "].aq", g_point_light[i].m_aq);
-	}
 }
 
 int main()
@@ -289,6 +228,8 @@ int main()
 	glViewport(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// ==================== MAIN LOOP ====================
 	// ===================================================
@@ -330,7 +271,7 @@ int main()
 		glfwPollEvents();
 
 		g_curr_time = glfwGetTime();
-		if (g_curr_time - g_prev_time > 0.5)
+		if (g_curr_time - g_prev_time > 0.25)
 		{
 			g_print_ms = g_fluid->m_solver._milliseconds * 1000.0f;
 			g_prev_time = g_curr_time;
