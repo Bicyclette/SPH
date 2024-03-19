@@ -11,7 +11,7 @@ To run the project, simply run the following lines in a terminal:
 
 - Linux
 ```sh
-cmake -B build -S .
+cmake -B build -S . -D CMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 cd build
 ./sph

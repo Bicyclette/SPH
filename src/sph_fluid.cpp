@@ -436,7 +436,7 @@ void SphSolver::buildNeighbor_sonic_boom()
 	_cs_build_neighbors.set("particleCount", particleCount());
 
 	glDispatchCompute((particleCount() / 32) + 32, 1, 1);
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void SphSolver::sph_sonic_boom()
@@ -446,7 +446,7 @@ void SphSolver::sph_sonic_boom()
 	_cs_sph.set("particleRadius", _h * 0.5f);
 
 	glDispatchCompute((particleCount() / 32) + 32, 1, 1);
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void SphSolver::buildNeighbor_sonic()
@@ -463,7 +463,6 @@ void SphSolver::buildNeighbor_sonic()
 		compute_particles_indices_in_grid_cell();
 	}
 
-	// todo cache friendly sort
 	std::sort(std::execution::par_unseq, _spatial_lookup.begin(), _spatial_lookup.end(), [] (glm::ivec2 const & a, glm::ivec2 const & b) -> bool { return a.y < b.y; });
 
 	// start index array
