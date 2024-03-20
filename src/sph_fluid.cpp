@@ -799,7 +799,7 @@ void Fluid::draw(std::shared_ptr<Shader> iShader, bool iWireframe)
 		iShader->use();
 		iShader->set("draw_domain", false);
 		glPointSize(m_particle_radius * 10.0f);
-		glDrawArraysInstanced(GL_POINTS, 0, m_solver.particleCount(), m_solver.particleCount());
+		glDrawArraysInstanced(GL_POINTS, 0, 1, m_solver.particleCount());
 		glBindVertexArray(0);
 		glPointSize(1.0f);
 	}
