@@ -9,7 +9,7 @@ Shader::Shader(std::string const& iCompute)
 	glCompileShader(cShader);
 
 	// Check for errors
-	checkCompileError(cShader, GL_COMPUTE_SHADER);
+	checkCompileError(cShader, GL_COMPUTE_SHADER, iCompute);
 
 	// create program
 	m_program = glCreateProgram();
@@ -37,8 +37,8 @@ Shader::Shader(std::string const & iVertex, std::string const & iFragment)
 	glCompileShader(fShader);
 
 	// Check for errors
-	checkCompileError(vShader, GL_VERTEX_SHADER);
-	checkCompileError(fShader, GL_FRAGMENT_SHADER);
+	checkCompileError(vShader, GL_VERTEX_SHADER, iVertex);
+	checkCompileError(fShader, GL_FRAGMENT_SHADER, iFragment);
 
 	// create program
 	m_program = glCreateProgram();
@@ -75,9 +75,9 @@ Shader::Shader(std::string const & iVertex, std::string const & iFragment, std::
 	glCompileShader(fShader);
 	
 	// Check for errors
-	checkCompileError(vShader, GL_VERTEX_SHADER);
-	checkCompileError(fShader, GL_GEOMETRY_SHADER);
-	checkCompileError(fShader, GL_FRAGMENT_SHADER);
+	checkCompileError(vShader, GL_VERTEX_SHADER, iVertex);
+	checkCompileError(fShader, GL_GEOMETRY_SHADER, iFragment);
+	checkCompileError(fShader, GL_FRAGMENT_SHADER, iGeometry);
 
 	// create program
 	m_program = glCreateProgram();
@@ -101,7 +101,7 @@ Shader::~Shader()
 	glDeleteProgram(m_program);
 }
 
-void Shader::checkCompileError(GLuint const & iStage, GLenum iType)
+void Shader::checkCompileError(GLuint const & iStage, GLenum iType, std::string const & path)
 {
 	int success;
 	int logLength;
@@ -115,19 +115,19 @@ void Shader::checkCompileError(GLuint const & iStage, GLenum iType)
 		glGetShaderInfoLog(iStage, logLength, nullptr, log.get());
 		if(iType == GL_VERTEX_SHADER)
 		{
-			std::cerr << "Error while compiling the vertex shader : " << log.get() << std::endl;
+			std::cerr << "Error while compiling the vertex shader " << path << ": " << log.get() << std::endl;
 		}
 		else if(iType == GL_FRAGMENT_SHADER)
 		{
-			std::cerr << "Error while compiling the fragment shader : " << log.get() << std::endl;
+			std::cerr << "Error while compiling the fragment shader " << path << ": " << log.get() << std::endl;
 		}
 		else if(iType == GL_GEOMETRY_SHADER)
 		{
-			std::cerr << "Error while compiling the geometry shader : " << log.get() << std::endl;
+			std::cerr << "Error while compiling the geometry shader " << path << ": " << log.get() << std::endl;
 		}
 		else if (iType == GL_COMPUTE_SHADER)
 		{
-			std::cerr << "Error while compiling the compute shader : " << log.get() << std::endl;
+			std::cerr << "Error while compiling the compute shader " << path << ": " << log.get() << std::endl;
 		}
 		glDeleteShader(iStage);
 	}

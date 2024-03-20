@@ -35,6 +35,8 @@ src/imgui/imgui_tables.cpp
 src/imgui/imgui_widgets.cpp
 )
 
+add_definitions(-DPROJECT_DIRECTORY="${PROJECT_SOURCE_DIR}")
+
 target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/dep/glad/src/glad.c)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/dep/glad/include/)
 
@@ -48,6 +50,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
 
 find_package(OpenMP REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+
+# uncomment for archbased distro
+# [[find_package(TBB REQUIRED COMPONENTS tbb)]]
+# [[target_link_libraries(${PROJECT_NAME} PRIVATE tbb)]]
 
 add_custom_command(TARGET ${PROJECT_NAME}
   POST_BUILD

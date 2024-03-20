@@ -63,7 +63,7 @@ void processInput(GLFWwindow* window)
 
 	if (glfwGetKey(window, GLFW_KEY_F12) == GLFW_PRESS) // recompile diffuse shader
 	{
-		g_shader_particle = std::make_shared<Shader>("../shaders/particle/vertex.glsl", "../shaders/particle/fragment.glsl");
+		g_shader_particle = std::make_shared<Shader>(std::string(PROJECT_DIRECTORY) + "/shaders/particle/vertex.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/particle/fragment.glsl");
 	}
 
 	// CAMERA RELATED
@@ -90,12 +90,12 @@ void initScene()
 
 	g_cam = std::make_shared<Camera>(glm::vec3(25.0f, 20.0f, 0.0f), glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 	
-	std::shared_ptr<Mesh> mesh_water_volume = std::make_shared<Mesh>("../assets/water_volume.obj");
-	g_mesh_water_tank = std::make_shared<Mesh>("../assets/water_tank.obj");
+	std::shared_ptr<Mesh> mesh_water_volume = std::make_shared<Mesh>(std::string(PROJECT_DIRECTORY) + "/assets/water_volume.obj");
+	g_mesh_water_tank = std::make_shared<Mesh>(std::string(PROJECT_DIRECTORY) + "/assets/water_tank.obj");
 	g_fluid = std::make_shared<Fluid>(mesh_water_volume, g_ui.m_particle_radius, g_mesh_water_tank);
 
-	g_shader_particle = std::make_shared<Shader>("../shaders/particle/vertex.glsl", "../shaders/particle/fragment.glsl");
-	g_shader_sonic_boom = std::make_shared<Shader>("../shaders/sonic_boom/vertex.glsl", "../shaders/sonic_boom/fragment.glsl");
+	g_shader_particle = std::make_shared<Shader>(std::string(PROJECT_DIRECTORY) + "/shaders/particle/vertex.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/particle/fragment.glsl");
+	g_shader_sonic_boom = std::make_shared<Shader>(std::string(PROJECT_DIRECTORY) + "/shaders/sonic_boom/vertex.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/sonic_boom/fragment.glsl");
 	
 	g_fluid->m_solver.set_neighbors_compute_method(SONIC_BOOM);
 }

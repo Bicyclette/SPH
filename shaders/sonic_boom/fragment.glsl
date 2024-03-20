@@ -5,7 +5,7 @@ out vec4 color;
 in VS_OUT
 {
 	vec3 fPos;
-	bool draw_domain;
+	flat bool draw_domain;
 } fs_in;
 
 void main()
