@@ -26,6 +26,7 @@ src/sph_fluid.cpp
 src/grid_axis.hpp
 src/grid_axis.cpp
 src/stb_image.h
+src/stb_image_write.h
 src/imgui/imgui.cpp
 src/imgui/imgui_demo.cpp
 src/imgui/imgui_draw.cpp
