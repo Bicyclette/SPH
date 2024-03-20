@@ -47,4 +47,5 @@ struct UI
 {
 	int m_draw_mode; // 0 = wireframe, 1 = shaded
 	float m_particle_radius;
+	bool m_record;
 };

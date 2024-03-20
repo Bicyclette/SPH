@@ -760,16 +760,12 @@ m_solver(0.001f, iParticleRadius * 2.0f, 1000.0f, glm::vec3(0.0f, -9.8f, 0.0f), 
 	m_is_running = false;
 }
 
-void Fluid::draw(std::shared_ptr<Shader> iShader, bool iWireframe)
+void Fluid::draw(std::shared_ptr<Shader> iShaderDomain, std::shared_ptr<Shader> iShaderFluid, bool iWireframe)
 {	
 	// draw domain
 	glLineWidth(2.0f);
 	glBindVertexArray(m_domain_vao);
-	iShader->use();
-	if(m_solver.m_neighbors_method == SONIC_BOOM)
-	{
-		iShader->set("draw_domain", true);
-	}
+	iShaderDomain->use();
 	glDrawArrays(GL_LINES, 0, 72);
 	glLineWidth(1.0f);
 
@@ -784,24 +780,20 @@ void Fluid::draw(std::shared_ptr<Shader> iShader, bool iWireframe)
 		glBindBuffer(GL_ARRAY_BUFFER, m_particle_vbo);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, m_solver.particleCount() * sizeof(glm::vec3), m_solver._pos.data());
 
-		iShader->use();
-		iShader->set("draw_domain", false);
-		glPointSize(m_particle_radius * 10.0f);
+		iShaderFluid->use();
+		iShaderFluid->set("particleRadius", m_particle_radius);
 		glDrawArrays(GL_POINTS, 0, m_solver.particleCount());
 		glBindVertexArray(0);
-		glPointSize(1.0f);
 	}
 	else
 	{
 		glBindVertexArray(m_particle_vao);
 		glBindBuffer(GL_ARRAY_BUFFER, m_solver._pos_SSBO);
 
-		iShader->use();
-		iShader->set("draw_domain", false);
-		glPointSize(m_particle_radius * 10.0f);
-		glDrawArraysInstanced(GL_POINTS, 0, m_solver.particleCount(), m_solver.particleCount());
+		iShaderFluid->use();
+		iShaderFluid->set("particleRadius", m_particle_radius);
+		glDrawArraysInstanced(GL_POINTS, 0, 1, m_solver.particleCount());
 		glBindVertexArray(0);
-		glPointSize(1.0f);
 	}
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
@@ -910,8 +902,8 @@ void Fluid::update()
 {
 	if (m_is_running)
 	{
-		// solve 64 steps = 16 ms
-		for (int i = 0; i < 64; ++i)
+		// solve 3 steps
+		for (int i = 0; i < 3; ++i)
 		{
 			m_solver.update();
 		}

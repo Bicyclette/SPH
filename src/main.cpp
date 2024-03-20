@@ -15,6 +15,8 @@ void draw_UI();
 void ImGui_init(GLFWwindow* win);
 void set_particle_shader();
 void set_sonic_boom_shader();
+void set_domain_shader();
+void record_frame();
 
 // ==================== GLOBAL OBJECTS ====================
 // ========================================================
@@ -32,6 +34,7 @@ std::shared_ptr<GridAxis> g_grid_axis;
 // shaders
 std::shared_ptr<Shader> g_shader_particle;
 std::shared_ptr<Shader> g_shader_sonic_boom;
+std::shared_ptr<Shader> g_shader_domain;
 
 // user interface
 struct Mouse g_mouse;
@@ -39,6 +42,8 @@ struct UI g_ui;
 double g_prev_time;
 double g_curr_time;
 float g_print_ms;
+double g_fps;
+uint64_t g_saved_count;
 
 // ==================== FUNCTION DEFINITIONS ====================
 // ==============================================================
@@ -63,7 +68,8 @@ void processInput(GLFWwindow* window)
 
 	if (glfwGetKey(window, GLFW_KEY_F12) == GLFW_PRESS) // recompile diffuse shader
 	{
-		g_shader_particle = std::make_shared<Shader>("../shaders/particle/vertex.glsl", "../shaders/particle/fragment.glsl");
+		g_shader_particle = std::make_shared<Shader>("../shaders/particle/vertex.glsl", "../shaders/particle/fragment.glsl", "../shaders/particle/geometry.glsl");
+		g_shader_sonic_boom = std::make_shared<Shader>("../shaders/sonic_boom/vertex.glsl", "../shaders/sonic_boom/fragment.glsl", "../shaders/sonic_boom/geometry.glsl");
 	}
 
 	// CAMERA RELATED
@@ -88,16 +94,19 @@ void initScene()
 {
 	g_grid_axis = std::make_shared<GridAxis>(50);
 
-	g_cam = std::make_shared<Camera>(glm::vec3(25.0f, 20.0f, 0.0f), glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+	g_cam = std::make_shared<Camera>(glm::vec3(40.0f, 30.0f, 0.0f), glm::vec3(0.0f, 15.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
 	
 	std::shared_ptr<Mesh> mesh_water_volume = std::make_shared<Mesh>("../assets/water_volume.obj");
 	g_mesh_water_tank = std::make_shared<Mesh>("../assets/water_tank.obj");
 	g_fluid = std::make_shared<Fluid>(mesh_water_volume, g_ui.m_particle_radius, g_mesh_water_tank);
 
-	g_shader_particle = std::make_shared<Shader>("../shaders/particle/vertex.glsl", "../shaders/particle/fragment.glsl");
-	g_shader_sonic_boom = std::make_shared<Shader>("../shaders/sonic_boom/vertex.glsl", "../shaders/sonic_boom/fragment.glsl");
+	g_shader_particle = std::make_shared<Shader>("../shaders/particle/vertex.glsl", "../shaders/particle/fragment.glsl", "../shaders/particle/geometry.glsl");
+	g_shader_sonic_boom = std::make_shared<Shader>("../shaders/sonic_boom/vertex.glsl", "../shaders/sonic_boom/fragment.glsl", "../shaders/sonic_boom/geometry.glsl");
+	g_shader_domain = std::make_shared<Shader>("../shaders/domain/vertex.glsl", "../shaders/domain/fragment.glsl");
 	
-	g_fluid->m_solver.set_neighbors_compute_method(SONIC_BOOM);
+	g_fluid->m_solver.set_neighbors_compute_method(SONIC);
+
+	g_saved_count = 0;
 }
 
 void renderScene()
@@ -105,15 +114,17 @@ void renderScene()
 	// draw grid
 	g_grid_axis->draw(g_cam->getViewMatrix(), g_cam->getProjectionMatrix());
 
+	// draw fluid
+	set_domain_shader();
 	if (g_fluid->m_solver.m_neighbors_method == SONIC_BOOM)
 	{
 		set_sonic_boom_shader();
-		g_fluid->draw(g_shader_sonic_boom, g_ui.m_draw_mode == 0);
+		g_fluid->draw(g_shader_domain, g_shader_sonic_boom, g_ui.m_draw_mode == 0);
 	}
 	else
 	{
 		set_particle_shader();
-		g_fluid->draw(g_shader_particle, g_ui.m_draw_mode == 0);
+		g_fluid->draw(g_shader_domain, g_shader_particle, g_ui.m_draw_mode == 0);
 	}
 
 	// reset
@@ -123,6 +134,19 @@ void renderScene()
 
 void draw_UI()
 {
+	ImGui::SetNextWindowPos(ImVec2(g_cam->getViewportDimensions().x - 100, 0));
+	ImGui::SetNextWindowSize(ImVec2(100, 50));
+	ImGui::Begin("FPS");
+	std::string fps_str = std::to_string(std::round(1.0 / g_fps));
+	ImGui::Text(fps_str.c_str());
+	ImGui::End();
+
+	ImGui::SetNextWindowPos(ImVec2(0, g_cam->getViewportDimensions().y - 60));
+	ImGui::SetNextWindowSize(ImVec2(200, 60));
+	ImGui::Begin("Record simulation frames");
+	ImGui::Checkbox("record", &g_ui.m_record);
+	ImGui::End();
+
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(300, 80));
 	ImGui::Begin("Drawing mode");
@@ -185,6 +209,7 @@ void set_particle_shader()
 	g_shader_particle->use();
 	g_shader_particle->set("view", g_cam->getViewMatrix());
 	g_shader_particle->set("proj", g_cam->getProjectionMatrix());
+	g_shader_particle->set("camPos", g_cam->getPosition());
 }
 
 void set_sonic_boom_shader()
@@ -192,6 +217,35 @@ void set_sonic_boom_shader()
 	g_shader_sonic_boom->use();
 	g_shader_sonic_boom->set("view", g_cam->getViewMatrix());
 	g_shader_sonic_boom->set("proj", g_cam->getProjectionMatrix());
+	g_shader_sonic_boom->set("camPos", g_cam->getPosition());
+}
+
+void set_domain_shader()
+{
+	g_shader_domain->use();
+	g_shader_domain->set("view", g_cam->getViewMatrix());
+	g_shader_domain->set("proj", g_cam->getProjectionMatrix());
+	g_shader_domain->set("camPos", g_cam->getPosition());
+}
+
+void record_frame()
+{
+	std::stringstream fpath;
+    fpath << "sph_" << g_saved_count++ << ".tga";
+
+    std::cout << "Saving file " << fpath.str() << " ... " << std::flush;
+    const short int w = g_cam->getViewportDimensions().x;
+    const short int h = g_cam->getViewportDimensions().y;
+    std::vector<int> buf(w*h*3, 0);
+    glReadPixels(0, 0, w, h, GL_BGR, GL_UNSIGNED_BYTE, &(buf[0]));
+
+    FILE *out = fopen(fpath.str().c_str(), "wb");
+    short TGAhead[] = {0, 2, 0, 0, 0, 0, w, h, 24};
+    fwrite(&TGAhead, sizeof(TGAhead), 1, out);
+    fwrite(&(buf[0]), 3*w*h, 1, out);
+    fclose(out);
+
+    std::cout << "Done" << std::endl;
 }
 
 int main()
@@ -236,12 +290,17 @@ int main()
 	ImGui_init(window);
 	g_ui.m_draw_mode = 1;
 	g_ui.m_particle_radius = 0.25f;
+	g_ui.m_record = false;
 
 	initScene();
+
+	double timer_prev = 0.0;
+	double timer_curr = 0.0;
 
 	g_prev_time = glfwGetTime();
 	while(!glfwWindowShouldClose(window))
 	{
+		timer_prev = glfwGetTime();
 		processInput(window);
 
 		// ImGui new frame
@@ -275,6 +334,14 @@ int main()
 		{
 			g_print_ms = g_fluid->m_solver._milliseconds * 1000.0f;
 			g_prev_time = g_curr_time;
+
+			timer_curr = glfwGetTime();
+			g_fps = timer_curr - timer_prev;
+		}
+
+		if(g_ui.m_record && g_fluid->m_is_running)
+		{
+			record_frame();
 		}
 	}
 

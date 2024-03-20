@@ -142,7 +142,7 @@ class Fluid
 public:
 	Fluid() = delete;
 	Fluid(std::shared_ptr<Mesh> iFluidMesh, float iParticleRadius, std::shared_ptr<Mesh> iDomainMesh);
-	void draw(std::shared_ptr<Shader> iShader, bool iWireframe);
+	void draw(std::shared_ptr<Shader> iShaderDomain, std::shared_ptr<Shader> iShaderFluid, bool iWireframe);
 	void update_particles_radius(float iParticleRadius);
     void reset();
     void update();
