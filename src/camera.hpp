@@ -22,6 +22,7 @@ public:
 	glm::vec3 getPosition();
 	float getNear();
 	float getFar();
+	glm::ivec2 getViewportDimensions();
 
 private:
 	float m_fov;

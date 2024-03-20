@@ -6,7 +6,7 @@ Camera::Camera(glm::vec3 iPos, glm::vec3 iLookAt, glm::vec3 iUp, int iViewportWi
 {
 	m_fov = 45.0f;
 	m_near = 0.1f;
-	m_far = 100.0f;
+	m_far = 1000.0f;
 	m_position = iPos;
 	m_lookAt = iLookAt;
 	m_up = iUp;
@@ -118,4 +118,9 @@ float Camera::getNear()
 float Camera::getFar()
 {
 	return m_far;
+}
+
+glm::ivec2 Camera::getViewportDimensions()
+{
+	return glm::ivec2(m_viewport_width, m_viewport_height);
 }

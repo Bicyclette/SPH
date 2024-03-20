@@ -7,15 +7,14 @@ layout (binding = 0, std430) buffer position
 	float _pos[];
 };
 
-uniform bool draw_domain;
-
 uniform mat4 view;
 uniform mat4 proj;
 
 out VS_OUT
 {
-	vec3 fPos;
-	bool draw_domain;
+	vec3 pos;
+	mat4 view;
+	mat4 proj;
 } vs_out;
 
 void main()
@@ -23,16 +22,9 @@ void main()
 	float x = _pos[gl_InstanceID * 4];
 	float y = _pos[gl_InstanceID * 4 + 1];
 	float z = _pos[gl_InstanceID * 4 + 2];
+	vs_out.pos = vec3(x, y, z);
 
-	if(draw_domain)
-	{
-		vs_out.fPos = domainPosition;
-	}
-	else
-	{
-		vs_out.fPos = vec3(x, y, z);
-	}
-
-	gl_Position = proj * view * vec4(vs_out.fPos, 1.0f);
-	vs_out.draw_domain = draw_domain;
+	gl_Position = proj * view * vec4(vs_out.pos, 1.0f);
+	vs_out.view = view;
+	vs_out.proj = proj;
 }
