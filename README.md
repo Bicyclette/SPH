@@ -9,10 +9,9 @@ Be sure to have the following dependencies installed in your machine:
 
 To run the project, simply run the following lines in a terminal:
 
-- Linux
+- Linux (for Arch users, first uncomment the lines in the `CMakeLists.txt`)
 ```sh
 cmake -B build -S . -D CMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
-cd build
-./sph
+./build/sph
 ```

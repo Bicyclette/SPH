@@ -66,8 +66,8 @@ _d0(density),
 _g(g),
 _eta(eta),
 _gamma(gamma),
-_cs_build_neighbors("../shaders/compute/NV/build_neighbors.glsl"),
-_cs_sph("../shaders/compute/NV/sph.glsl")
+_cs_build_neighbors(std::string(PROJECT_DIRECTORY) + "/shaders/compute/NV/build_neighbors.glsl"),
+_cs_sph(std::string(PROJECT_DIRECTORY) + "/shaders/compute/NV/sph.glsl")
 {
 	_dt = 0.00025f;
 	_m0 = _d0 * _h * _h * _h;

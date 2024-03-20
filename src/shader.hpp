@@ -11,7 +11,7 @@ public:
 	Shader(std::string const & iVertex, std::string const & iFragment);
 	Shader(std::string const & iVertex, std::string const & iFragment, std::string const & iGeometry);
 	~Shader();
-	void checkCompileError(GLuint const & iStage, GLenum iType);
+	void checkCompileError(GLuint const & iStage, GLenum iType, std::string const & path = "");
 	bool checkLinkError();
 	void set(std::string const & iUniform, bool const & iVal);
 	void set(std::string const & iUniform, int const & iVal);
