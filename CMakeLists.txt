@@ -52,8 +52,8 @@ find_package(OpenMP REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
 
 # uncomment for archbased distro
-# find_package(TBB REQUIRED COMPONENTS tbb)
-# target_link_libraries(${PROJECT_NAME} PRIVATE tbb)
+find_package(TBB REQUIRED COMPONENTS tbb)
+target_link_libraries(${PROJECT_NAME} PRIVATE tbb)
 
 add_custom_command(TARGET ${PROJECT_NAME}
   POST_BUILD

@@ -100,9 +100,9 @@ void initScene()
 	g_mesh_water_tank = std::make_shared<Mesh>(std::string(PROJECT_DIRECTORY) + "/assets/water_tank.obj");
 	g_fluid = std::make_shared<Fluid>(mesh_water_volume, g_ui.m_particle_radius, g_mesh_water_tank);
 
-	g_shader_particle = std::make_shared<Shader>(std::string(PROJECT_DIRECTORY) + "shaders/particle/vertex.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/particle/fragment.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/particle/geometry.glsl");
-	g_shader_sonic_boom = std::make_shared<Shader>(std::string(PROJECT_DIRECTORY) + "shaders/sonic_boom/vertex.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/sonic_boom/fragment.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/sonic_boom/geometry.glsl");
-	g_shader_domain = std::make_shared<Shader>(std::string(PROJECT_DIRECTORY) + "shaders/domain/vertex.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/domain/fragment.glsl");
+	g_shader_particle = std::make_shared<Shader>(std::string(PROJECT_DIRECTORY) + "/shaders/particle/vertex.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/particle/fragment.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/particle/geometry.glsl");
+	g_shader_sonic_boom = std::make_shared<Shader>(std::string(PROJECT_DIRECTORY) + "/shaders/sonic_boom/vertex.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/sonic_boom/fragment.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/sonic_boom/geometry.glsl");
+	g_shader_domain = std::make_shared<Shader>(std::string(PROJECT_DIRECTORY) + "/shaders/domain/vertex.glsl", std::string(PROJECT_DIRECTORY) + "/shaders/domain/fragment.glsl");
 	
 	g_fluid->m_solver.set_neighbors_compute_method(SONIC);
 
