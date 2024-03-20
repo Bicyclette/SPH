@@ -4,6 +4,9 @@
 #include "light.hpp"
 #include "grid_axis.hpp"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 // ==================== FUNCTION HEADERS ====================
 // ==========================================================
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -231,21 +234,15 @@ void set_domain_shader()
 void record_frame()
 {
 	std::stringstream fpath;
-    fpath << "sph_" << g_saved_count++ << ".tga";
+    fpath << "sph_" << g_saved_count++ << ".jpg";
 
-    std::cout << "Saving file " << fpath.str() << " ... " << std::flush;
     const short int w = g_cam->getViewportDimensions().x;
     const short int h = g_cam->getViewportDimensions().y;
-    std::vector<int> buf(w*h*3, 0);
-    glReadPixels(0, 0, w, h, GL_BGR, GL_UNSIGNED_BYTE, &(buf[0]));
+    std::vector<uint8_t> buf(w*h*3, 0);
+    glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, &(buf[0]));
 
-    FILE *out = fopen(fpath.str().c_str(), "wb");
-    short TGAhead[] = {0, 2, 0, 0, 0, 0, w, h, 24};
-    fwrite(&TGAhead, sizeof(TGAhead), 1, out);
-    fwrite(&(buf[0]), 3*w*h, 1, out);
-    fclose(out);
-
-    std::cout << "Done" << std::endl;
+	stbi_flip_vertically_on_write(true);
+	stbi_write_jpg(fpath.str().c_str(), w, h, 3, buf.data(), 100);
 }
 
 int main()
