@@ -2,6 +2,8 @@
 
 The idea of this project is to compare the speed of different SPH implementations.
 
+![splash\_stanford\_bunny](readme_resources/splash.gif)
+
 ## HOWTO
 
 Be sure to have the following dependencies installed in your machine:
