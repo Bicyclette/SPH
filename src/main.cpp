@@ -243,6 +243,8 @@ void record_frame()
 
 	stbi_flip_vertically_on_write(true);
 	stbi_write_jpg(fpath.str().c_str(), w, h, 3, buf.data(), 100);
+
+	std::cout << "Saved image \"" << fpath.str() << "\"" << std::flush;
 }
 
 int main()

@@ -123,8 +123,10 @@ public:
     // compute shaders
     GLbitfield _writeMask;
     GLbitfield _readMask;
-    Shader _cs_build_neighbors;
-    Shader _cs_sph;
+    Shader _cs_build_neighbors_nvidia;
+    Shader _cs_sph_nvidia;
+    Shader _cs_build_neighbors_amd;
+    Shader _cs_sph_amd;
     GLuint _pos_SSBO;
     GLuint _vel_SSBO;
     GLuint _density_SSBO;

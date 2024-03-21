@@ -1,7 +1,7 @@
 #version 460 core
 
-// NVIDIA WARP = 32 threads invocations per working group
-layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+// AMD WARP = 64 threads invocations per working group
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
 float PI = 3.14159f;
 

@@ -66,8 +66,10 @@ _d0(density),
 _g(g),
 _eta(eta),
 _gamma(gamma),
-_cs_build_neighbors(std::string(PROJECT_DIRECTORY) + "/shaders/compute/NV/build_neighbors.glsl"),
-_cs_sph(std::string(PROJECT_DIRECTORY) + "/shaders/compute/NV/sph.glsl")
+_cs_build_neighbors_nvidia(std::string(PROJECT_DIRECTORY) + "/shaders/compute/NV/build_neighbors.glsl"),
+_cs_sph_nvidia(std::string(PROJECT_DIRECTORY) + "/shaders/compute/NV/sph.glsl"),
+_cs_build_neighbors_amd(std::string(PROJECT_DIRECTORY) + "/shaders/compute/AMD/build_neighbors.glsl"),
+_cs_sph_amd(std::string(PROJECT_DIRECTORY) + "/shaders/compute/AMD/sph.glsl")
 {
 	_dt = 0.00025f;
 	_m0 = _d0 * _h * _h * _h;
@@ -128,21 +130,37 @@ void SphSolver::set_boundary(AABB iAABB)
 	const float domain_depth = fabs(_front - _back);
 	_domain_dimensions = glm::vec3(domain_width, domain_height, domain_depth);
 	
-	_cs_build_neighbors.use();
-	_cs_build_neighbors.set("_l", _l);
-	_cs_build_neighbors.set("_r", _r);
-	_cs_build_neighbors.set("_b", _b);
-	_cs_build_neighbors.set("_t", _t);
-	_cs_build_neighbors.set("_front", _front);
-	_cs_build_neighbors.set("_back", _back);
+	_cs_build_neighbors_nvidia.use();
+	_cs_build_neighbors_nvidia.set("_l", _l);
+	_cs_build_neighbors_nvidia.set("_r", _r);
+	_cs_build_neighbors_nvidia.set("_b", _b);
+	_cs_build_neighbors_nvidia.set("_t", _t);
+	_cs_build_neighbors_nvidia.set("_front", _front);
+	_cs_build_neighbors_nvidia.set("_back", _back);
 
-	_cs_sph.use();
-	_cs_sph.set("_l", _l);
-	_cs_sph.set("_r", _r);
-	_cs_sph.set("_b", _b);
-	_cs_sph.set("_t", _t);
-	_cs_sph.set("_front", _front);
-	_cs_sph.set("_back", _back);
+	_cs_sph_nvidia.use();
+	_cs_sph_nvidia.set("_l", _l);
+	_cs_sph_nvidia.set("_r", _r);
+	_cs_sph_nvidia.set("_b", _b);
+	_cs_sph_nvidia.set("_t", _t);
+	_cs_sph_nvidia.set("_front", _front);
+	_cs_sph_nvidia.set("_back", _back);
+
+	_cs_build_neighbors_amd.use();
+	_cs_build_neighbors_amd.set("_l", _l);
+	_cs_build_neighbors_amd.set("_r", _r);
+	_cs_build_neighbors_amd.set("_b", _b);
+	_cs_build_neighbors_amd.set("_t", _t);
+	_cs_build_neighbors_amd.set("_front", _front);
+	_cs_build_neighbors_amd.set("_back", _back);
+
+	_cs_sph_amd.use();
+	_cs_sph_amd.set("_l", _l);
+	_cs_sph_amd.set("_r", _r);
+	_cs_sph_amd.set("_b", _b);
+	_cs_sph_amd.set("_t", _t);
+	_cs_sph_amd.set("_front", _front);
+	_cs_sph_amd.set("_back", _back);
 }
 
 void SphSolver::set_grid_resolution(int res_x, int res_y, int res_z)
@@ -432,8 +450,8 @@ void SphSolver::reset_GPU_SSBOs()
 
 void SphSolver::buildNeighbor_sonic_boom()
 {
-	_cs_build_neighbors.use();
-	_cs_build_neighbors.set("particleCount", particleCount());
+	_cs_build_neighbors_nvidia.use();
+	_cs_build_neighbors_nvidia.set("particleCount", particleCount());
 
 	glDispatchCompute((particleCount() / 32) + 32, 1, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -441,9 +459,9 @@ void SphSolver::buildNeighbor_sonic_boom()
 
 void SphSolver::sph_sonic_boom()
 {
-	_cs_sph.use();
-	_cs_sph.set("particleCount", particleCount());
-	_cs_sph.set("particleRadius", _h * 0.5f);
+	_cs_sph_nvidia.use();
+	_cs_sph_nvidia.set("particleCount", particleCount());
+	_cs_sph_nvidia.set("particleRadius", _h * 0.5f);
 
 	glDispatchCompute((particleCount() / 32) + 32, 1, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -660,7 +678,7 @@ void SphSolver::applyForcesAndResolveCollisions()
 			_pos[i].x = clamp(_pos[i].x, left, right);
 			_pos[i].y = clamp(_pos[i].y, bottom, top);
 			_pos[i].z = clamp(_pos[i].z, back, front);
-			_vel[i] *= -0.7f;
+			_vel[i] = _pos[i] - p;
 		}
 	}
 }
@@ -687,7 +705,7 @@ void SphSolver::reset_spatial_lookup_arrays()
 // ===========================================================================
 
 Fluid::Fluid(std::shared_ptr<Mesh> iFluidMesh, float iParticleRadius, std::shared_ptr<Mesh> iDomainMesh) :
-m_solver(0.001f, iParticleRadius * 2.0f, 1000.0f, glm::vec3(0.0f, -9.8f, 0.0f), 0.01f, 7.0f)
+m_solver(0.0075f, iParticleRadius * 2.0f, 1000.0f, glm::vec3(0.0f, -9.8f, 0.0f), 0.01f, 7.0f)
 {
 	// fluid mesh (volume)
 	m_fluid_mesh = iFluidMesh;
